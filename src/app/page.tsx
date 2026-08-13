@@ -75,6 +75,22 @@ export default function Home() {
           </p>
         </main>
       </div>
+
+      {/* 底部版权信息 */}
+      <footer className="flex items-center justify-center gap-2 border-t border-gray-200 bg-white px-4 py-1.5 text-xs text-gray-400">
+        <span>© 2026 简历制作系统</span>
+        <span className="text-gray-200">|</span>
+        <span>系统创始人：乱世千钧(Chun)</span>
+        <span className="text-gray-200">|</span>
+        <a
+          href="https://beian.miit.gov.cn/"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="transition hover:text-brand-600"
+        >
+          蜀ICP备2025161896号
+        </a>
+      </footer>
     </div>
   );
 }

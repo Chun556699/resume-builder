@@ -23,26 +23,27 @@ export default function EditorPanel() {
   const [tab, setTab] = useState<Tab>("personal");
 
   return (
-    <div className="flex h-full">
-      {/* 垂直图标导航 */}
-      <nav className="flex w-[78px] shrink-0 flex-col overflow-y-auto border-r border-gray-100 bg-gray-50/60 py-2">
+    <div className="flex h-full flex-col">
+      {/* 功能导航：2 列网格，图标 + 文字横向显示 */}
+      <div className="grid grid-cols-2 gap-1.5 border-b border-gray-100 p-3">
         {TABS.map((t) => {
           const active = tab === t.id;
           return (
             <button
               key={t.id}
               onClick={() => setTab(t.id)}
-              className={`relative flex w-full flex-col items-center gap-0.5 px-1 py-2.5 text-[11px] transition ${
-                active ? "text-brand-600" : "text-gray-500 hover:bg-white hover:text-gray-700"
+              className={`flex items-center gap-2 whitespace-nowrap rounded-lg border px-3 py-2 text-left text-sm transition ${
+                active
+                  ? "border-brand-500 bg-brand-50 font-semibold text-brand-600"
+                  : "border-gray-200 bg-white text-gray-600 hover:border-gray-300 hover:bg-gray-50"
               }`}
             >
-              {active && <span className="absolute left-0 top-1/2 h-7 w-1 -translate-y-1/2 rounded-r-full bg-brand-500" />}
-              <span className={`text-lg leading-none ${active ? "" : "opacity-80"}`}>{t.icon}</span>
-              <span className={`leading-none ${active ? "font-semibold" : ""}`}>{t.label}</span>
+              <span className="text-base leading-none">{t.icon}</span>
+              <span className="leading-none">{t.label}</span>
             </button>
           );
         })}
-      </nav>
+      </div>
 
       {/* 内容区 */}
       <div className="flex-1 overflow-y-auto bg-white p-4">
