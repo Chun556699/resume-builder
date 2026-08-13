@@ -17,6 +17,7 @@ import {
 import { ResumeData } from "@/types/resume";
 import { uid, buildSectionOrder } from "@/lib/utils";
 import { fileToImages, ocrResume } from "@/lib/importResume";
+import { Icon } from "../Icon";
 
 function useAiAction() {
   const [loading, setLoading] = useState(false);
@@ -230,7 +231,7 @@ export default function AiPanel() {
     <div className="space-y-3 text-sm">
       {/* 以旧换新 */}
       <div className="rounded-lg border border-emerald-200 bg-emerald-50/60 p-3">
-        <h4 className="mb-1.5 font-semibold text-emerald-700">🔄 以旧换新</h4>
+        <h4 className="mb-1.5 flex items-center gap-1.5 font-semibold text-emerald-700"><Icon name="refresh" size={15} /> 以旧换新</h4>
         <p className="mb-2 text-xs text-gray-500">上传旧简历（图片 / PDF），AI 自动 OCR 识别生成结构化简历。</p>
         <input ref={importRef} type="file" accept=".pdf,.png,.jpg,.jpeg,.webp,image/*" className="hidden" onChange={handleImportFile} />
         <button onClick={() => importRef.current?.click()} disabled={importing} className={`${primary} w-full`}>
@@ -241,7 +242,7 @@ export default function AiPanel() {
 
       {/* 语言润色 */}
       <div className="rounded-lg border border-gray-200 p-3">
-        <h4 className="mb-1.5 font-semibold text-gray-700">✍️ 语言润色</h4>
+        <h4 className="mb-1.5 flex items-center gap-1.5 font-semibold text-gray-700"><Icon name="edit" size={15} /> 语言润色</h4>
         <p className="mb-2 text-xs text-gray-500">把你的大白话写进去，AI 自动改成专业、量化的简历语言。</p>
         <textarea
           rows={3}
@@ -268,7 +269,7 @@ export default function AiPanel() {
 
       {/* 模块润色 */}
       <div className="rounded-lg border border-gray-200 p-3">
-        <h4 className="mb-1.5 font-semibold text-gray-700">🪄 模块润色</h4>
+        <h4 className="mb-1.5 flex items-center gap-1.5 font-semibold text-gray-700"><Icon name="brush" size={15} /> 模块润色</h4>
         <div className="space-y-2">
           <select value={polishType} onChange={(e) => { setPolishType(e.target.value); setPolishItemId(""); }} className={selectCls}>
             {Object.entries(MODULE_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
@@ -286,7 +287,7 @@ export default function AiPanel() {
 
       {/* 一键生成 */}
       <div className="rounded-lg border border-brand-200 bg-brand-50/50 p-3">
-        <h4 className="mb-1.5 font-semibold text-brand-700">✨ 一键生成简历</h4>
+        <h4 className="mb-1.5 flex items-center gap-1.5 font-semibold text-brand-700"><Icon name="bolt" size={15} /> 一键生成简历</h4>
         <textarea rows={2} value={brief} onChange={(e) => setBrief(e.target.value)} placeholder="描述背景、目标岗位与亮点，AI 自动生成完整简历……" className="w-full rounded-md border border-gray-300 px-2.5 py-1.5 text-xs outline-none focus:border-brand-500" />
         <button onClick={handleGenerate} disabled={gen.loading} className={`${primary} mt-2 w-full`}>
           {gen.loading ? "生成中…" : "生成完整简历"}
@@ -295,7 +296,7 @@ export default function AiPanel() {
 
       {/* JD 定制 */}
       <div className="rounded-lg border border-gray-200 p-3">
-        <h4 className="mb-1.5 font-semibold text-gray-700">🎯 根据职位描述定制</h4>
+        <h4 className="mb-1.5 flex items-center gap-1.5 font-semibold text-gray-700"><Icon name="target" size={15} /> 根据职位描述定制</h4>
         <textarea rows={3} value={jd} onChange={(e) => setJd(e.target.value)} placeholder="粘贴目标职位 JD，AI 据此优化简历……" className="w-full rounded-md border border-gray-300 px-2.5 py-1.5 text-xs outline-none focus:border-brand-500" />
         <button onClick={handleTailor} disabled={tailor.loading} className={`${primary} mt-2 w-full`}>
           {tailor.loading ? "定制中…" : "根据 JD 定制简历"}

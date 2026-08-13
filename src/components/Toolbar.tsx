@@ -8,6 +8,7 @@ import { exportPdf } from "@/lib/pdfExport";
 import { exportJson, exportImage, printResume, filenameFromName } from "@/lib/export";
 import { PAPERS } from "@/lib/paper";
 import { FONTS } from "@/lib/fonts";
+import { Icon } from "@/components/Icon";
 
 const TEMPLATES: { id: TemplateId; label: string }[] = [
   { id: "classic", label: "经典" },
@@ -86,7 +87,7 @@ export default function Toolbar() {
 
   return (
     <header className="flex flex-wrap items-center gap-2 border-b border-gray-200 bg-white px-3 py-2">
-      <span className="text-base font-bold text-gray-900">📄 AI 简历制作</span>
+      <span className="flex items-center gap-1.5 text-base font-bold text-gray-900"><Icon name="file-text" size={18} /> AI 简历制作</span>
       <div className="mx-1 h-5 w-px bg-gray-200" />
 
       {/* 模板 */}
@@ -144,13 +145,13 @@ export default function Toolbar() {
       <div className="ml-auto flex flex-wrap items-center gap-1.5">
         <span className="hidden text-[11px] text-gray-400 md:inline">{pageCount} 页</span>
         <button onClick={handleFitToPage} disabled={fitting} className={btn} title="自动压缩字号/行高，尽量装进一页 A4">
-          {fitting ? "压缩中…" : "压缩到一页"}
+          <span className="flex items-center gap-1"><Icon name="layout-grid" size={14} />{fitting ? "压缩中…" : "压缩到一页"}</span>
         </button>
-        <button onClick={loadSample} className={btn}>示例</button>
-        <button onClick={() => exportJson(data, filenameFromName(data.personal.fullName))} className={btn}>JSON</button>
-        <button onClick={handleImage} disabled={exporting === "png"} className={btn}>{exporting === "png" ? "导出中…" : "PNG"}</button>
-        <button onClick={printResume} className={btn}>打印</button>
-        <button onClick={handlePdf} disabled={exporting === "pdf"} className={primary}>{exporting === "pdf" ? "生成中…" : "导出 PDF"}</button>
+        <button onClick={loadSample} className={btn}><span className="flex items-center gap-1"><Icon name="reload" size={14} />示例</span></button>
+        <button onClick={() => exportJson(data, filenameFromName(data.personal.fullName))} className={btn}><span className="flex items-center gap-1"><Icon name="code" size={14} />JSON</span></button>
+        <button onClick={handleImage} disabled={exporting === "png"} className={btn}><span className="flex items-center gap-1"><Icon name="photo" size={14} />{exporting === "png" ? "导出中…" : "PNG"}</span></button>
+        <button onClick={printResume} className={btn}><span className="flex items-center gap-1"><Icon name="file-text" size={14} />打印</span></button>
+        <button onClick={handlePdf} disabled={exporting === "pdf"} className={primary}><span className="flex items-center gap-1"><Icon name="download" size={14} />{exporting === "pdf" ? "生成中…" : "导出 PDF"}</span></button>
       </div>
     </header>
   );

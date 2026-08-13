@@ -6,6 +6,7 @@ import EditorPanel from "@/components/editor/EditorPanel";
 import AiPanel from "@/components/editor/AiPanel";
 import ResumePreview from "@/components/preview/ResumePreview";
 import SelectionToolbar from "@/components/preview/SelectionToolbar";
+import { Icon } from "@/components/Icon";
 import { useResumeStore } from "@/store/resumeStore";
 
 export default function Home() {
@@ -29,7 +30,7 @@ export default function Home() {
                   mode === "edit" ? "bg-white text-brand-600 shadow-sm" : "text-gray-500 hover:text-gray-700"
                 }`}
               >
-                <span className="text-base">✏️</span> 编辑
+                <span className="text-base"><Icon name="edit" size={16} /></span> 编辑
               </button>
               <button
                 onClick={() => setMode("ai")}
@@ -37,7 +38,7 @@ export default function Home() {
                   mode === "ai" ? "bg-white text-brand-600 shadow-sm" : "text-gray-500 hover:text-gray-700"
                 }`}
               >
-                <span className="text-base">🤖</span> AI 助手
+                <span className="text-base"><Icon name="atom" size={16} /></span> AI 助手
               </button>
             </div>
           </div>

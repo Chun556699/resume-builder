@@ -5,18 +5,19 @@ import { useResumeStore } from "@/store/resumeStore";
 import { Field, Input, TextArea, Card, AddButton } from "./fields";
 import { uid, readImageAsDataUrl, moveItem, buildSectionOrder } from "@/lib/utils";
 import BatchStylePanel from "./BatchStylePanel";
+import { Icon, IconName } from "../Icon";
 
 type Tab = "personal" | "experience" | "education" | "project" | "skill" | "custom" | "layout" | "batch";
 
-const TABS: { id: Tab; label: string; icon: string }[] = [
-  { id: "personal", label: "个人信息", icon: "👤" },
-  { id: "experience", label: "工作经历", icon: "💼" },
-  { id: "education", label: "教育经历", icon: "🎓" },
-  { id: "project", label: "项目经历", icon: "🚀" },
-  { id: "skill", label: "专业技能", icon: "⚡" },
-  { id: "custom", label: "自定义", icon: "📌" },
-  { id: "batch", label: "批量样式", icon: "🎨" },
-  { id: "layout", label: "布局排序", icon: "🔀" },
+const TABS: { id: Tab; label: string; icon: IconName }[] = [
+  { id: "personal", label: "个人信息", icon: "id" },
+  { id: "experience", label: "工作经历", icon: "report" },
+  { id: "education", label: "教育经历", icon: "book-2" },
+  { id: "project", label: "项目经历", icon: "puzzle" },
+  { id: "skill", label: "专业技能", icon: "bolt" },
+  { id: "custom", label: "自定义", icon: "apps" },
+  { id: "batch", label: "批量样式", icon: "brush" },
+  { id: "layout", label: "布局排序", icon: "layout" },
 ];
 
 export default function EditorPanel() {
@@ -38,7 +39,7 @@ export default function EditorPanel() {
                   : "border-gray-200 bg-white text-gray-600 hover:border-gray-300 hover:bg-gray-50"
               }`}
             >
-              <span className="text-base leading-none">{t.icon}</span>
+              <span className="text-base leading-none"><Icon name={t.icon} size={18} /></span>
               <span className="leading-none">{t.label}</span>
             </button>
           );
@@ -96,8 +97,8 @@ function PersonalSection() {
             )}
           </div>
           <div className="flex flex-col gap-1.5">
-            <button onClick={() => fileRef.current?.click()} className="rounded-md bg-brand-500 px-3 py-1.5 text-xs font-medium text-white hover:bg-brand-600">
-              导入照片
+            <button onClick={() => fileRef.current?.click()} className="flex items-center gap-1.5 rounded-md bg-brand-500 px-3 py-1.5 text-xs font-medium text-white hover:bg-brand-600">
+              <Icon name="photo-plus" size={14} /> 导入照片
             </button>
             {p.avatar && (
               <button onClick={() => updateData((d) => { d.personal.avatar = ""; })} className="text-xs text-red-500 hover:underline">移除照片</button>
