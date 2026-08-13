@@ -78,6 +78,62 @@ npm run build
 npm run start
 ```
 
+---
+
+## ☁️ 部署到云服务器
+
+本系统无数据库、无状态（数据存于浏览器 localStorage），是标准的 Next.js 应用，可部署到任意支持 Node.js 的云服务器（阿里云 / 腾讯云 / AWS / 各 VPS）。AI 与 OCR 接口通过服务端 API 路由代理，服务器只需能访问外网（调用硅基流动 API）即可。
+
+### 方案一：Docker 部署（推荐，最省心）
+
+```bash
+# 构建镜像
+docker build -t resume-builder .
+
+# 运行（传入硅基流动密钥）
+docker run -d \
+  --name resume-builder \
+  -p 3000:3000 \
+  -e SILICONFLOW_API_KEY=sk-你的密钥 \
+  -e SILICONFLOW_MODEL=deepseek-ai/DeepSeek-V3.2 \
+  -e SILICONFLOW_OCR_MODEL=Qwen/Qwen3-VL-8B-Instruct \
+  resume-builder
+
+# 访问 http://服务器IP:3000
+```
+
+> 生产环境建议再挂一层 Nginx / Caddy 反向代理并配置 HTTPS 域名。
+
+### 方案二：传统 Node + PM2 部署
+
+```bash
+# 在服务器上克隆代码
+cd /opt
+npm install
+npm run build
+
+# 复制环境变量
+cp .env.example .env.local
+vim .env.local   # 填入硅基流动密钥
+
+# 用 PM2 守护进程
+npm i -g pm2
+pm2 start ecosystem.config.js
+pm2 save
+pm2 startup
+
+# 访问 http://服务器IP:3000
+```
+
+### 方案三：一键部署到 Vercel（免费）
+
+1. 将仓库推送到 GitHub（已完成）
+2. 在 [vercel.com](https://vercel.com) 点击 “Import Project”，选择本仓库
+3. 在 Environment Variables 中配置 `SILICONFLOW_API_KEY` 等变量
+4. 点击 Deploy，即可获得公网访问地址
+
+> Vercel 的 Serverless 函数会自动处理 `/api/ai` 和 `/api/ocr` 路由，无需额外配置。
+
 ### 环境变量说明
 
 | 变量 | 说明 | 默认值 |
