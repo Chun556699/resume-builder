@@ -1,5 +1,6 @@
-# PM2 部署配置（传统云服务器 / VPS 直接跑 Node）
-# 用法：pm2 start ecosystem.config.js
+// PM2 部署配置（传统云服务器 / VPS 直接跑 Node）
+// 用法：pm2 start ecosystem.config.js
+// 注意：若 3000 端口被占用，可设置 PORT 环境变量，如 PORT=3001 pm2 start ecosystem.config.js
 module.exports = {
   apps: [
     {
