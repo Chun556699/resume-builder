@@ -8,3 +8,6 @@ next-env.d.ts
 
 # dev log
 dev-server.log
+
+# 上下文记忆文件（含敏感信息，不提交）
+MEMORY.md
