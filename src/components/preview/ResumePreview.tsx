@@ -438,9 +438,20 @@ function PreviewInner({
   }, [heights, orderedSections, paper, pad, twoColumn]);
 
   const setPageCount = useUiStore((s) => s.setPageCount);
+  const twoColumnRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
-    setPageCount(twoColumn ? 1 : pages.length || 1);
-  }, [pages, twoColumn, setPageCount]);
+    if (twoColumn) {
+      // 双栏模板：按内容高度估算页数
+      const el = twoColumnRef.current;
+      if (el) {
+        const h = el.scrollHeight || el.offsetHeight;
+        const pages = Math.max(1, Math.ceil(h / paper.height));
+        setPageCount(pages);
+      }
+    } else {
+      setPageCount(pages.length || 1);
+    }
+  }, [twoColumn, pages, paper.height, setPageCount, data, template, fontSize, fontFamily, lineHeight, paperSize, showAvatar, avatarShape, avatarSize]);
 
   const containerStyle: React.CSSProperties = {
     fontFamily: font,
@@ -457,7 +468,7 @@ function PreviewInner({
     const sideTextColor = dark ? "#d1d5db" : "#333";
     const sideHeadColor = dark ? "#fff" : "#111";
     return (
-      <div id="resume-preview-root" className="flex bg-white" style={containerStyle}>
+      <div id="resume-preview-root" ref={twoColumnRef} className="flex bg-white" style={containerStyle}>
         <aside className="w-[32%] px-4 py-8" style={{ backgroundColor: sidebarBg }}>
           {<Avatar />}
           <InlineEditable value={p.fullName} onChange={(v) => set((d) => (d.personal.fullName = v))} placeholder="姓名" className="text-2xl font-bold" as="div" style={{ color: sideHeadColor }} />

@@ -36,22 +36,30 @@ export default function Toolbar() {
   const handleFitToPage = async () => {
     setFitting(true);
     try {
-      let size = fontSize;
       let guard = 0;
-      while (guard < 12 && useUiStore.getState().pageCount > 1 && size > 8) {
+      let size = fontSize;
+      let lh = lineHeight;
+
+      // 1. 逐步降低字号
+      while (guard < 20 && useUiStore.getState().pageCount > 1 && size > 9) {
         size -= 1;
         setFontSize(size);
-        await new Promise((r) => setTimeout(r, 220));
+        await new Promise((r) => setTimeout(r, 320));
         guard++;
       }
-      if (useUiStore.getState().pageCount > 1) {
-        let lh = lineHeight;
-        while (guard < 18 && useUiStore.getState().pageCount > 1 && lh > 1.05) {
-          lh = Math.round((lh - 0.05) * 100) / 100;
-          setLineHeight(lh);
-          await new Promise((r) => setTimeout(r, 220));
-          guard++;
-        }
+
+      // 2. 再逐步压缩行高
+      while (guard < 40 && useUiStore.getState().pageCount > 1 && lh > 1.05) {
+        lh = Math.round((lh - 0.05) * 100) / 100;
+        setLineHeight(lh);
+        await new Promise((r) => setTimeout(r, 320));
+        guard++;
+      }
+
+      // 3. 结果反馈
+      const finalPages = useUiStore.getState().pageCount;
+      if (finalPages > 1) {
+        alert(`已尽力压缩（字号 ${size}px / 行高 ${lh}），但内容较多，仍为 ${finalPages} 页。建议删减部分内容或使用「极客」模板。`);
       }
     } finally {
       setFitting(false);
