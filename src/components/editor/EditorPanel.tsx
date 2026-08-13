@@ -23,27 +23,29 @@ export default function EditorPanel() {
   const [tab, setTab] = useState<Tab>("personal");
 
   return (
-    <div className="flex h-full flex-col">
-      {/* 标签导航 */}
-      <div className="flex gap-1 border-b border-gray-200 px-2 pt-2">
-        {TABS.map((t) => (
-          <button
-            key={t.id}
-            onClick={() => setTab(t.id)}
-            className={`flex items-center gap-1 rounded-t-lg px-2.5 py-1.5 text-xs transition ${
-              tab === t.id
-                ? "bg-brand-500 text-white"
-                : "text-gray-600 hover:bg-gray-100"
-            }`}
-          >
-            <span>{t.icon}</span>
-            <span>{t.label}</span>
-          </button>
-        ))}
-      </div>
+    <div className="flex h-full">
+      {/* 垂直图标导航 */}
+      <nav className="flex w-[78px] shrink-0 flex-col overflow-y-auto border-r border-gray-100 bg-gray-50/60 py-2">
+        {TABS.map((t) => {
+          const active = tab === t.id;
+          return (
+            <button
+              key={t.id}
+              onClick={() => setTab(t.id)}
+              className={`relative flex w-full flex-col items-center gap-0.5 px-1 py-2.5 text-[11px] transition ${
+                active ? "text-brand-600" : "text-gray-500 hover:bg-white hover:text-gray-700"
+              }`}
+            >
+              {active && <span className="absolute left-0 top-1/2 h-7 w-1 -translate-y-1/2 rounded-r-full bg-brand-500" />}
+              <span className={`text-lg leading-none ${active ? "" : "opacity-80"}`}>{t.icon}</span>
+              <span className={`leading-none ${active ? "font-semibold" : ""}`}>{t.label}</span>
+            </button>
+          );
+        })}
+      </nav>
 
       {/* 内容区 */}
-      <div className="flex-1 overflow-y-auto p-3">
+      <div className="flex-1 overflow-y-auto bg-white p-4">
         {tab === "personal" && <PersonalSection />}
         {tab === "experience" && <ExperienceSection />}
         {tab === "education" && <EducationSection />}

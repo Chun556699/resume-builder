@@ -19,20 +19,27 @@ export default function Home() {
 
       <div className="flex flex-1 overflow-hidden">
         {/* 左侧面板 */}
-        <aside className="flex w-[400px] shrink-0 flex-col border-r border-gray-200 bg-gray-50">
-          <div className="flex border-b border-gray-200">
-            <button
-              onClick={() => setMode("edit")}
-              className={`flex-1 py-2 text-sm font-medium transition ${mode === "edit" ? "border-b-2 border-brand-500 text-brand-600" : "text-gray-500 hover:text-gray-800"}`}
-            >
-              ✏️ 编辑
-            </button>
-            <button
-              onClick={() => setMode("ai")}
-              className={`flex-1 py-2 text-sm font-medium transition ${mode === "ai" ? "border-b-2 border-brand-500 text-brand-600" : "text-gray-500 hover:text-gray-800"}`}
-            >
-              🤖 AI 助手
-            </button>
+        <aside className="flex w-[430px] shrink-0 flex-col border-r border-gray-200 bg-white">
+          {/* 模式切换：分段控制器 */}
+          <div className="border-b border-gray-100 p-2.5">
+            <div className="flex rounded-xl bg-gray-100 p-1">
+              <button
+                onClick={() => setMode("edit")}
+                className={`flex flex-1 items-center justify-center gap-1.5 rounded-lg py-2 text-sm font-medium transition ${
+                  mode === "edit" ? "bg-white text-brand-600 shadow-sm" : "text-gray-500 hover:text-gray-700"
+                }`}
+              >
+                <span className="text-base">✏️</span> 编辑
+              </button>
+              <button
+                onClick={() => setMode("ai")}
+                className={`flex flex-1 items-center justify-center gap-1.5 rounded-lg py-2 text-sm font-medium transition ${
+                  mode === "ai" ? "bg-white text-brand-600 shadow-sm" : "text-gray-500 hover:text-gray-700"
+                }`}
+              >
+                <span className="text-base">🤖</span> AI 助手
+              </button>
+            </div>
           </div>
           <div className="flex-1 overflow-hidden">
             {mode === "edit" ? <EditorPanel /> : (
