@@ -11,3 +11,27 @@ dev-server.log
 
 # 上下文记忆文件（含敏感信息，不提交）
 MEMORY.md
+
+# 本地调试/部署脚本（可能含服务器凭据，不提交）
+_deploy*.py
+_probe*.js
+
+# 调试截图与构建产物
+_shot-*.png
+mobile-test.png
+*.tar.gz
+
+# 本地账号数据（含密码哈希，不提交）
+data/
+
+# 运维/部署与本地工具目录（含服务器地址与凭据，不提交）
+.deploy/
+.mimosa/
+.pi-glla/
+docs/
+
+# 本地字体（体积大，部署时自行放置；见 README 字体说明）
+# public/fonts/
+
+.vercel
+.env*

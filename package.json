@@ -10,6 +10,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@douyinfe/semi-icons": "^2.103.0",
     "@react-pdf/renderer": "^3.4.4",
     "html-to-image": "^1.11.11",
     "next": "^14.2.15",

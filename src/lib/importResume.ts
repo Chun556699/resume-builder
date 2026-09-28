@@ -2,20 +2,48 @@
 
 import { ResumeData } from "@/types/resume";
 import { extractJson } from "@/lib/ai";
-import { uid } from "@/lib/utils";
+import { normalizeResumePayload } from "@/lib/normalizeResume";
+import { useAuthStore } from "@/store/authStore";
 
-// 将任意文件（图片 / PDF）转换为可送 OCR 的 base64 图片列表
-export async function fileToImages(file: File): Promise<string[]> {
+// 导入载荷：文本模式（文字版 PDF，精确解析）或图片模式（截图/扫描件，走视觉识别）
+export interface ImportPayload {
+  text?: string;
+  images?: string[];
+}
+
+// 文本模式的最小长度：低于该值的 PDF 视为扫描件，回退图片识别
+const MIN_TEXT_CHARS = 200;
+
+// 将任意文件（图片 / PDF）转换为可送识别的载荷
+// - 文字版 PDF（BOSS直聘、智联招聘、前程无忧、猎聘、LinkedIn 等导出件多为文字版）
+//   直接提取内嵌文本，内容零失真；
+// - 扫描/图片型 PDF 与图片文件走视觉识别。
+export async function fileToImportPayload(file: File): Promise<ImportPayload> {
   if (file.type.startsWith("image/")) {
-    return [await readAsDataUrl(file)];
+    return { images: [await readAsDataUrl(file)] };
   }
 
   if (file.type === "application/pdf" || file.name.toLowerCase().endsWith(".pdf")) {
-    return await pdfToImages(file);
+    try {
+      const text = await pdfToText(file);
+      if (text.replace(/\s+/g, "").length >= MIN_TEXT_CHARS) {
+        return { text };
+      }
+    } catch (e) {
+      console.warn("PDF 文本提取失败，回退图片识别：", e);
+    }
+    return { images: await pdfToImages(file) };
   }
 
   // 兜底：尝试按图片读取
-  return [await readAsDataUrl(file)];
+  return { images: [await readAsDataUrl(file)] };
+}
+
+// 兼容旧调用：仅需要图片列表时使用
+export async function fileToImages(file: File): Promise<string[]> {
+  const payload = await fileToImportPayload(file);
+  if (payload.images?.length) return payload.images;
+  return [];
 }
 
 function readAsDataUrl(file: File): Promise<string> {
@@ -25,6 +53,36 @@ function readAsDataUrl(file: File): Promise<string> {
     reader.onerror = reject;
     reader.readAsDataURL(file);
   });
+}
+
+// 提取 PDF 内嵌文本（按页拼接，行间以换行还原）
+async function pdfToText(file: File): Promise<string> {
+  const pdfjs = await import("pdfjs-dist");
+  pdfjs.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.js";
+  const buf = await file.arrayBuffer();
+  const doc = await pdfjs.getDocument({ data: buf }).promise;
+  const pages: string[] = [];
+  const maxPages = Math.min(doc.numPages, 6);
+  for (let i = 1; i <= maxPages; i++) {
+    const page = await doc.getPage(i);
+    const content = await page.getTextContent();
+    let lastY: number | null = null;
+    let pageText = "";
+    for (const item of content.items) {
+      if (!("str" in item)) continue;
+      const y = (item as { transform?: number[] }).transform?.[5] ?? null;
+      // y 坐标变化视为换行，尽量还原原始行结构
+      if (lastY !== null && y !== null && Math.abs(y - lastY) > 2) {
+        pageText += "\n";
+      } else if (pageText && !pageText.endsWith(" ") && !pageText.endsWith("\n")) {
+        pageText += " ";
+      }
+      pageText += item.str;
+      if (y !== null) lastY = y;
+    }
+    pages.push(pageText.trim());
+  }
+  return pages.filter(Boolean).join("\n\n");
 }
 
 async function pdfToImages(file: File): Promise<string[]> {
@@ -48,75 +106,26 @@ async function pdfToImages(file: File): Promise<string[]> {
   return pages;
 }
 
-// 归一化 OCR 返回的 JSON 为 ResumeData
-export function normalizeImportedResume(json: any): ResumeData {
-  const empty: ResumeData = {
-    personal: { fullName: "", jobTitle: "", email: "", phone: "", location: "", website: "", avatar: "", summary: "" },
-    experiences: [], education: [], projects: [], skills: [], customSections: [],
-  };
-  if (!json || typeof json !== "object") return empty;
-
-  const p = json.personal || {};
-  empty.personal = {
-    fullName: String(p.fullName || ""),
-    jobTitle: String(p.jobTitle || ""),
-    email: String(p.email || ""),
-    phone: String(p.phone || ""),
-    location: String(p.location || ""),
-    website: String(p.website || ""),
-    avatar: "",
-    summary: String(p.summary || ""),
-  };
-
-  const arr = (x: any) => (Array.isArray(x) ? x : []);
-  empty.experiences = arr(json.experiences).map((x: any) => ({
-    id: uid("exp"), company: String(x.company || ""), position: String(x.position || ""),
-    location: String(x.location || ""), startDate: String(x.startDate || ""),
-    endDate: String(x.endDate || ""), current: !!x.current, description: String(x.description || ""),
-  }));
-  empty.education = arr(json.education).map((x: any) => ({
-    id: uid("edu"), school: String(x.school || ""), degree: String(x.degree || ""),
-    major: String(x.major || ""), startDate: String(x.startDate || ""),
-    endDate: String(x.endDate || ""), description: String(x.description || ""),
-  }));
-  empty.projects = arr(json.projects).map((x: any) => ({
-    id: uid("proj"), name: String(x.name || ""), role: String(x.role || ""),
-    link: String(x.link || ""), startDate: String(x.startDate || ""),
-    endDate: String(x.endDate || ""), description: String(x.description || ""),
-  }));
-
-  // skills 可能是字符串数组，也可能是 {name, items}
-  const skills = arr(json.skills);
-  if (skills.length > 0) {
-    if (typeof skills[0] === "string") {
-      empty.skills = [{ id: uid("skill"), name: "专业技能", items: skills.join(", ") }];
-    } else {
-      empty.skills = skills.map((x: any) => ({
-        id: uid("skill"),
-        name: String(x.name || "技能"),
-        items: Array.isArray(x.items) ? x.items.join(", ") : String(x.items || ""),
-      }));
-    }
-  }
-
-  empty.customSections = arr(json.customSections).map((x: any) => ({
-    id: uid("custom"), title: String(x.title || ""), content: String(x.content || ""), images: [],
-  }));
-
-  return empty;
-}
-
-// 调用服务端 OCR 接口
-export async function ocrResume(images: string[]): Promise<ResumeData> {
+// 调用服务端识别接口（文本或图片）
+export async function ocrResume(payload: ImportPayload | string[]): Promise<ResumeData> {
+  const body = typeof payload === "string" ? { images: payload } : payload;
+  const token = useAuthStore.getState().token;
   const resp = await fetch("/api/ocr", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ images }),
+    headers: {
+      "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    body: JSON.stringify(body),
   });
   const data = await resp.json();
-  if (!resp.ok) throw new Error(data?.error || "OCR 识别失败");
-  if (!data?.content) throw new Error("OCR 未返回内容");
+  if (!resp.ok) {
+    const err = new Error(data?.error || "简历识别失败");
+    (err as any).code = data?.code;
+    throw err;
+  }
+  if (!data?.content) throw new Error("识别结果为空");
   const json = extractJson(data.content);
-  if (!json) throw new Error("OCR 结果无法解析为结构化数据");
-  return normalizeImportedResume(json);
+  if (!json) throw new Error("识别结果无法解析为结构化数据");
+  return normalizeResumePayload(json);
 }

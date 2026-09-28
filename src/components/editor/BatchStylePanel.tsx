@@ -2,17 +2,11 @@
 
 import React, { useState } from "react";
 import { useResumeStore } from "@/store/resumeStore";
+import { useUiT } from "@/lib/useUiT";
 
 type StyleAction = "bold" | "size+" | "size-" | "color" | "clear";
 
-const MODULES = [
-  { key: "summary", label: "个人简介" },
-  { key: "experience", label: "工作经历" },
-  { key: "project", label: "项目经历" },
-  { key: "education", label: "教育经历" },
-  { key: "skill", label: "专业技能" },
-  { key: "custom", label: "自定义模块" },
-];
+const MODULE_KEYS = ["summary", "experience", "project", "education", "skill", "custom"];
 
 // 给一段富文本应用样式（外层包裹）
 function applyStyle(html: string, action: StyleAction, color: string, baseSize: number): string {
@@ -45,6 +39,7 @@ function applyStyle(html: string, action: StyleAction, color: string, baseSize: 
 
 export default function BatchStylePanel() {
   const { data, updateData, fontSize } = useResumeStore();
+  const L = useUiT();
   const [selected, setSelected] = useState<Set<string>>(new Set(["summary"]));
   const [color, setColor] = useState("#c2410c");
 
@@ -58,7 +53,7 @@ export default function BatchStylePanel() {
   };
 
   const toggleAll = () => {
-    setSelected((prev) => (prev.size === MODULES.length ? new Set() : new Set(MODULES.map((m) => m.key))));
+    setSelected((prev) => (prev.size === MODULE_KEYS.length ? new Set() : new Set(MODULE_KEYS)));
   };
 
   const run = (action: StyleAction) => {
@@ -76,19 +71,19 @@ export default function BatchStylePanel() {
 
   return (
     <div className="space-y-3 p-1">
-      <p className="text-xs text-gray-500">勾选多个模块，一键同时应用样式（加粗 / 字号 / 颜色）。</p>
+      <p className="text-xs text-gray-500">{L.batchHint}</p>
 
       {/* 模块多选 */}
       <div className="rounded-lg border border-gray-200 bg-white p-2">
         <label className="flex cursor-pointer items-center gap-2 border-b border-gray-100 pb-2 text-xs font-medium text-gray-700">
-          <input type="checkbox" checked={selected.size === MODULES.length} onChange={toggleAll} />
-          全选
+          <input type="checkbox" checked={selected.size === MODULE_KEYS.length} onChange={toggleAll} />
+          {L.batchAll}
         </label>
         <div className="mt-1.5 grid grid-cols-2 gap-1">
-          {MODULES.map((m) => (
-            <label key={m.key} className="flex cursor-pointer items-center gap-2 rounded px-1.5 py-1 text-xs text-gray-700 hover:bg-gray-50">
-              <input type="checkbox" checked={selected.has(m.key)} onChange={() => toggle(m.key)} />
-              {m.label}
+          {MODULE_KEYS.map((k) => (
+            <label key={k} className="flex cursor-pointer items-center gap-2 rounded px-1.5 py-1 text-xs text-gray-700 hover:bg-gray-50">
+              <input type="checkbox" checked={selected.has(k)} onChange={() => toggle(k)} />
+              {L.sections[k] || k}
             </label>
           ))}
         </div>
@@ -96,17 +91,17 @@ export default function BatchStylePanel() {
 
       {/* 样式动作 */}
       <div className="rounded-lg border border-gray-200 bg-white p-2">
-        <p className="mb-2 text-xs text-gray-500">已选 {selected.size} 个模块，应用：</p>
+        <p className="mb-2 text-xs text-gray-500">{L.batchSelected(selected.size)}</p>
         <div className="flex flex-wrap gap-1.5">
-          <button onClick={() => run("bold")} className={`${actionBtn} font-bold`}>加粗</button>
-          <button onClick={() => run("size+")} className={actionBtn}>字号 +</button>
-          <button onClick={() => run("size-")} className={actionBtn}>字号 −</button>
+          <button onClick={() => run("bold")} className={`${actionBtn} font-bold`}>{L.stBold}</button>
+          <button onClick={() => run("size+")} className={actionBtn}>{L.batchSizeUp}</button>
+          <button onClick={() => run("size-")} className={actionBtn}>{L.batchSizeDown}</button>
           <label className={`${actionBtn} flex cursor-pointer items-center gap-1`}>
             <span style={{ color }}>A</span>
-            颜色
+            {L.stColor}
             <input type="color" value={color} onChange={(e) => { setColor(e.target.value); run("color"); }} className="h-0 w-0 overflow-hidden" />
           </label>
-          <button onClick={() => run("clear")} className={actionBtn}>清除格式</button>
+          <button onClick={() => run("clear")} className={actionBtn}>{L.stClear}</button>
         </div>
       </div>
     </div>

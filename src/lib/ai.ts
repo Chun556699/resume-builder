@@ -1,6 +1,7 @@
 "use client";
 
-// 客户端 AI 调用封装：通过 Next.js API 路由代理到硅基流动
+// 客户端 AI 调用封装：通过 Next.js API 路由代理到 DeepSeek
+import { useAuthStore } from "@/store/authStore";
 
 export interface AiOptions {
   temperature?: number;
@@ -12,9 +13,13 @@ export async function chatWithAi(
   userPrompt: string,
   opts?: AiOptions
 ): Promise<string> {
+  const token = useAuthStore.getState().token;
   const resp = await fetch("/api/ai", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
     body: JSON.stringify({
       messages: [
         { role: "system", content: systemPrompt },
@@ -27,10 +32,20 @@ export async function chatWithAi(
 
   const data = await resp.json();
   if (!resp.ok) {
-    throw new Error(data?.error || "AI 调用失败");
+    const err = new Error(data?.error || "AI 调用失败");
+    (err as any).code = data?.code;
+    throw err;
   }
   if (!data?.content) {
     throw new Error("AI 未返回内容，请重试");
+  }
+  // 服务端返回最新额度，同步到本地登录态
+  if (data?.quota) {
+    try {
+      useAuthStore.getState().setQuota(data.quota);
+    } catch {
+      /* ignore */
+    }
   }
   return data.content as string;
 }
@@ -72,31 +87,31 @@ export async function generateFullResume(
 }
 未提供的信息可以给出合理的通用示例或留空。只输出 JSON。`;
 
-  return chatWithAi(RESUME_SYSTEM, user, { temperature: 0.6, maxTokens: 4096 });
+  return chatWithAi(RESUME_SYSTEM, user, { temperature: 0.6, maxTokens: 6144 });
 }
 
 // 优化个人总结
 export async function polishSummary(summary: string, jobTitle: string): Promise<string> {
   const user = `请优化以下求职者的个人总结（目标岗位：${jobTitle || "未指定"}），使其更专业、突出亮点、量化成果，控制在 80-120 字：\n\n${summary || "（无）"}`;
-  return chatWithAi(RESUME_SYSTEM, user, { temperature: 0.7, maxTokens: 800 });
+  return chatWithAi(RESUME_SYSTEM, user, { temperature: 0.7, maxTokens: 1500 });
 }
 
 // 优化工作经历描述
 export async function polishExperience(description: string, position: string): Promise<string> {
   const user = `请优化以下工作经历描述（岗位：${position || "未指定"}），采用「动词开头 + 量化成果」的写法，每行一个要点，用换行分隔，共 3-6 个要点：\n\n${description || "（无）"}`;
-  return chatWithAi(RESUME_SYSTEM, user, { temperature: 0.7, maxTokens: 1200 });
+  return chatWithAi(RESUME_SYSTEM, user, { temperature: 0.7, maxTokens: 2000 });
 }
 
 // 根据 JD 定制简历（岗位匹配优化）
 export async function tailorToJob(resumeJson: string, jobDescription: string): Promise<string> {
   const user = `以下是求职者当前简历 JSON：\n${resumeJson}\n\n以下是目标职位描述（JD）：\n${jobDescription}\n\n请根据 JD 优化这份简历：提取 JD 关键词，优化「个人总结」使其更匹配目标岗位，并在工作经历与项目经历中突出与 JD 相关的技能与成果。输出优化后的完整简历 JSON（保持原结构，字段名一致），只输出 JSON。`;
-  return chatWithAi(RESUME_SYSTEM, user, { temperature: 0.5, maxTokens: 4096 });
+  return chatWithAi(RESUME_SYSTEM, user, { temperature: 0.5, maxTokens: 6144 });
 }
 
 // 通用语言润色（大白话 → 专业表达）
 export async function polishText(text: string, kind: string): Promise<string> {
   const user = `请润色以下${kind}内容，使语言更专业、简洁、有说服力，使用量化表达，保留原意和关键信息，不要编造事实：\n\n${text || "（无）"}`;
-  return chatWithAi(RESUME_SYSTEM, user, { temperature: 0.6, maxTokens: 1200 });
+  return chatWithAi(RESUME_SYSTEM, user, { temperature: 0.6, maxTokens: 2000 });
 }
 
 // 优化项目经历
@@ -112,7 +127,7 @@ export async function polishEducation(description: string, school: string): Prom
 // 优化技能
 export async function polishSkills(items: string): Promise<string> {
   const user = `请整理并润色以下技能列表，使用规范的行业术语，按相关性排序，用逗号分隔（保持简洁）：\n\n${items || "（无）"}`;
-  return chatWithAi(RESUME_SYSTEM, user, { temperature: 0.5, maxTokens: 800 });
+  return chatWithAi(RESUME_SYSTEM, user, { temperature: 0.5, maxTokens: 1500 });
 }
 
 // 优化自定义模块

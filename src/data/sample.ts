@@ -91,3 +91,78 @@ export const sampleResume: ResumeData = {
     },
   ],
 };
+
+// 英文示例：界面/简历语言为英文时点击「示例」加载
+export const sampleResumeEn: ResumeData = {
+  personal: {
+    fullName: "John Carter",
+    jobTitle: "Senior Frontend Engineer",
+    email: "john.carter@example.com",
+    phone: "+1 (415) 555-0132",
+    location: "San Francisco, CA",
+    website: "https://github.com/johncarter",
+    avatar: "",
+    summary:
+      "Frontend engineer with 6 years of experience building large-scale web applications with React and TypeScript. Led multiple products from zero to launch, with deep expertise in performance optimization, engineering infrastructure, and cross-team collaboration.",
+  },
+  experiences: [
+    {
+      id: "exp-1",
+      company: "Nimbus Tech",
+      position: "Senior Frontend Engineer",
+      location: "San Francisco, CA",
+      startDate: "2021-07",
+      endDate: "",
+      current: true,
+      description:
+        "Lead frontend architecture for the core business platform; drove micro-frontend adoption across 5 product lines\nBuilt the component library and design system, adopted by 10+ teams and improving delivery speed by 30%\nCut first-contentful-paint from 4.5s to 1.8s through bundle splitting, caching and rendering optimization\nMentored 3 junior engineers and ran team code reviews and tech-sharing sessions",
+    },
+    {
+      id: "exp-2",
+      company: "BrightLoop (startup)",
+      position: "Frontend Engineer",
+      location: "Seattle, WA",
+      startDate: "2018-07",
+      endDate: "2021-06",
+      current: false,
+      description:
+        "Developed the web and mobile-web e-commerce app, owning catalog, checkout and payment modules\nRebuilt the legacy app with React + TypeScript, significantly improving maintainability\nSet up the frontend monitoring stack, cutting production incident triage time by 50%",
+    },
+  ],
+  education: [
+    {
+      id: "edu-1",
+      school: "University of Washington",
+      degree: "B.S.",
+      major: "Computer Science",
+      startDate: "2014-09",
+      endDate: "2018-06",
+      description: "GPA 3.7/4.0; ACM ICPC regional finalist; recipient of the Dean's Scholarship",
+    },
+  ],
+  projects: [
+    {
+      id: "proj-1",
+      name: "Low-code Page Builder",
+      role: "Core developer",
+      link: "https://github.com/example/lowcode",
+      startDate: "2022-01",
+      endDate: "2022-12",
+      description:
+        "Built a drag-and-drop page builder engine with React, Redux and Konva\nDesigned a JSON-Schema-driven rendering protocol with hot-pluggable components and versioning\nPowered 200+ internal marketing pages, tripling campaign delivery speed",
+    },
+  ],
+  skills: [
+    { id: "skill-1", name: "Frontend", items: "React, Vue, TypeScript, Next.js, Tailwind CSS, Vite" },
+    { id: "skill-2", name: "Tooling", items: "Webpack, ESLint, CI/CD, Jest, Playwright, Monorepo" },
+    { id: "skill-3", name: "Others", items: "Node.js, Git, Linux, Docker, Web Performance" },
+  ],
+  customSections: [
+    {
+      id: "custom-1",
+      title: "Awards",
+      content: "2023 Nimbus Tech Star of the Year\n2020 Brightloop Rookie of the Year",
+      images: [],
+    },
+  ],
+};

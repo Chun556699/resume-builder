@@ -72,10 +72,29 @@ export type TemplateId =
   | "sidebar" // 深色侧栏
   | "timeline" // 时间轴
   | "minimal" // 极简留白
-  | "geek"; // 极客（程序员高密度）
+  | "geek" // 极客（程序员高密度）
+  | "blocks"; // 块状标签（整块可拖拽 + 技术标签方块）
 
 export type PaperSize = "A4" | "Letter" | "Legal" | "A5";
 
-export type FontFamily = "sans" | "serif" | "kai" | "puhuiti" | "smiley";
+// 中文字体（含中文与拉丁字形，可单独设置）
+export type CnFontFamily =
+  | "sans" // 思源黑体 标准
+  | "serif" // 思源宋体
+  | "kai" // 霞鹜文楷
+  | "puhuiti" // 阿里巴巴普惠体
+  | "smiley" // 得意黑
+  | "sans-light" // 思源黑体 细体
+  | "sans-medium" // 思源黑体 中黑
+  | "sans-heavy" // 思源黑体 巨黑
+  | "rouhei"; // 思源柔黑（圆角思源黑体）
+
+// 英文字体（拉丁字形，可单独设置；auto 表示跟随中文字体）
+export type EnFontFamily =
+  | "auto"
+  | "source-sans" // Source Sans 3
+  | "source-serif" // Source Serif 4
+  | "source-code" // Source Code Pro
+  | "googlesans-code"; // Google Sans Code
 
 export type AvatarShape = "circle" | "square";

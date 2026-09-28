@@ -14,12 +14,15 @@ import {
   polishSkills,
   polishCustom,
 } from "@/lib/ai";
-import { ResumeData } from "@/types/resume";
-import { uid, buildSectionOrder } from "@/lib/utils";
-import { fileToImages, ocrResume } from "@/lib/importResume";
+import { buildSectionOrder, htmlToPlainText } from "@/lib/utils";
+import { normalizeResumePayload } from "@/lib/normalizeResume";
+import { fileToImportPayload, ocrResume } from "@/lib/importResume";
+import { useUiStore } from "@/store/uiStore";
+import { useUiT } from "@/lib/useUiT";
 import { Icon } from "../Icon";
 
 function useAiAction() {
+  const L = useUiT();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [result, setResult] = useState("");
@@ -33,7 +36,11 @@ function useAiAction() {
       setResult(r);
       return r;
     } catch (e: any) {
-      setError(e?.message || "AI 调用失败");
+      setError(e?.message || L.aiErrCall);
+      // AI 额度不足时弹出 AI 次卡购买
+      if (e?.code === "NO_AI_CREDIT") {
+        useUiStore.getState().openPay("ai");
+      }
       return null;
     } finally {
       setLoading(false);
@@ -43,60 +50,53 @@ function useAiAction() {
   return { loading, error, result, setResult, run };
 }
 
-function normalizeResume(json: any): ResumeData {
-  const empty: ResumeData = {
-    personal: { fullName: "", jobTitle: "", email: "", phone: "", location: "", website: "", avatar: "", summary: "" },
-    experiences: [], education: [], projects: [], skills: [], customSections: [],
-  };
-  if (!json || typeof json !== "object") return empty;
+const MODULE_KEYS = ["summary", "experience", "project", "education", "skill", "custom"];
 
-  const p = json.personal || {};
-  empty.personal = {
-    fullName: String(p.fullName || ""), jobTitle: String(p.jobTitle || ""),
-    email: String(p.email || ""), phone: String(p.phone || ""),
-    location: String(p.location || ""), website: String(p.website || ""),
-    avatar: "", summary: String(p.summary || ""),
-  };
-
-  const arr = (x: any) => (Array.isArray(x) ? x : []);
-  empty.experiences = arr(json.experiences).map((x: any) => ({
-    id: uid("exp"), company: String(x.company || ""), position: String(x.position || ""),
-    location: String(x.location || ""), startDate: String(x.startDate || ""),
-    endDate: String(x.endDate || ""), current: !!x.current, description: String(x.description || ""),
-  }));
-  empty.education = arr(json.education).map((x: any) => ({
-    id: uid("edu"), school: String(x.school || ""), degree: String(x.degree || ""),
-    major: String(x.major || ""), startDate: String(x.startDate || ""),
-    endDate: String(x.endDate || ""), description: String(x.description || ""),
-  }));
-  empty.projects = arr(json.projects).map((x: any) => ({
-    id: uid("proj"), name: String(x.name || ""), role: String(x.role || ""),
-    link: String(x.link || ""), startDate: String(x.startDate || ""),
-    endDate: String(x.endDate || ""), description: String(x.description || ""),
-  }));
-  const skills = arr(json.skills);
-  if (skills.length > 0) {
-    empty.skills = typeof skills[0] === "string"
-      ? [{ id: uid("skill"), name: "专业技能", items: skills.join(", ") }]
-      : skills.map((x: any) => ({ id: uid("skill"), name: String(x.name || "技能"), items: Array.isArray(x.items) ? x.items.join(", ") : String(x.items || "") }));
-  }
-  empty.customSections = arr(json.customSections).map((x: any) => ({
-    id: uid("custom"), title: String(x.title || ""), content: String(x.content || ""), images: [],
-  }));
-  return empty;
+// AI 面板折叠区块：默认收起，避免五个功能全部铺开导致面板拥挤
+function AiSection({
+  icon,
+  title,
+  accent = false,
+  defaultOpen = false,
+  children,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  accent?: boolean;
+  defaultOpen?: boolean;
+  children: React.ReactNode;
+}) {
+  const [open, setOpen] = useState(defaultOpen);
+  return (
+    <div
+      className={`overflow-hidden rounded-xl border transition ${
+        accent ? "border-brand-200 bg-brand-50/40" : "border-gray-200 bg-white hover:border-gray-300"
+      }`}
+    >
+      <button
+        onClick={() => setOpen((o) => !o)}
+        aria-expanded={open}
+        className="flex w-full items-center justify-between gap-2 px-4 py-3 text-left"
+      >
+        <span className={`flex items-center gap-2 text-sm font-semibold ${accent ? "text-brand-700" : "text-gray-700"}`}>
+          {icon}
+          {title}
+        </span>
+        <Icon
+          name={open ? "chevron-up" : "chevron-down"}
+          size={14}
+          className={`shrink-0 transition-transform ${open ? "text-brand-500" : "text-gray-400"}`}
+        />
+      </button>
+      {open && <div className="px-4 pb-4">{children}</div>}
+    </div>
+  );
 }
-
-const MODULE_LABELS: Record<string, string> = {
-  summary: "个人简介",
-  experience: "工作经历",
-  project: "项目经历",
-  education: "教育经历",
-  skill: "专业技能",
-  custom: "自定义模块",
-};
 
 export default function AiPanel() {
   const { data, updateData, setData, sectionOrder, setSectionOrder } = useResumeStore();
+  const L = useUiT();
+  const uiLang = useUiStore((s) => s.uiLang);
   const [brief, setBrief] = useState("");
   const [jd, setJd] = useState("");
   const [importing, setImporting] = useState(false);
@@ -124,16 +124,16 @@ export default function AiPanel() {
   const activePolishItem: any = polishItems.find((x: any) => x.id === polishItemId) || polishItems[0];
 
   const itemLabel = (x: any) =>
-    x?.company || x?.name || x?.school || x?.title || x?.position || "条目";
+    x?.company || x?.name || x?.school || x?.title || x?.position || L.aiEntry;
 
   const getPolishedText = (): string => {
     switch (polishType) {
-      case "summary": return data.personal.summary;
-      case "experience": return activePolishItem?.description || "";
-      case "project": return activePolishItem?.description || "";
-      case "education": return activePolishItem?.description || "";
-      case "skill": return activePolishItem?.items || "";
-      case "custom": return activePolishItem?.content || "";
+      case "summary": return htmlToPlainText(data.personal.summary);
+      case "experience": return htmlToPlainText(activePolishItem?.description || "");
+      case "project": return htmlToPlainText(activePolishItem?.description || "");
+      case "education": return htmlToPlainText(activePolishItem?.description || "");
+      case "skill": return htmlToPlainText(activePolishItem?.items || "");
+      case "custom": return htmlToPlainText(activePolishItem?.content || "");
       default: return "";
     }
   };
@@ -161,8 +161,8 @@ export default function AiPanel() {
   // 语言润色：大白话 → 专业表达
   const [roughText, setRoughText] = useState("");
   const handleLingo = async () => {
-    if (!roughText.trim()) { lingo.run(async () => { throw new Error("请先输入要润色的大白话"); }); return; }
-    await lingo.run(() => polishText(roughText, "简历"));
+    if (!roughText.trim()) { lingo.run(async () => { throw new Error(L.aiErrInputFirst); }); return; }
+    await lingo.run(() => polishText(roughText, uiLang === "en" ? "resume (English)" : "简历"));
   };
 
   const applyLingoToModule = () => {
@@ -185,8 +185,8 @@ export default function AiPanel() {
     }));
     if (!r) return;
     const json = extractJson(r);
-    if (!json) { gen.run(async () => { throw new Error("AI 返回内容不是有效 JSON"); }); return; }
-    const merged = normalizeResume(json);
+    if (!json) { gen.run(async () => { throw new Error(L.aiErrJson); }); return; }
+    const merged = normalizeResumePayload(json);
     if (!merged.personal.fullName) merged.personal.fullName = data.personal.fullName;
     if (!merged.personal.email) merged.personal.email = data.personal.email;
     if (!merged.personal.phone) merged.personal.phone = data.personal.phone;
@@ -194,12 +194,12 @@ export default function AiPanel() {
   };
 
   const handleTailor = async () => {
-    if (!jd.trim()) { tailor.run(async () => { throw new Error("请先填写职位描述（JD）"); }); return; }
+    if (!jd.trim()) { tailor.run(async () => { throw new Error(L.aiErrJdFirst); }); return; }
     const r = await tailor.run(() => tailorToJob(JSON.stringify(data), jd));
     if (!r) return;
     const json = extractJson(r);
-    if (!json) { tailor.run(async () => { throw new Error("AI 返回内容不是有效 JSON"); }); return; }
-    setData(normalizeResume(json));
+    if (!json) { tailor.run(async () => { throw new Error(L.aiErrJson); }); return; }
+    setData(normalizeResumePayload(json));
   };
 
   const handleImportFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -207,15 +207,19 @@ export default function AiPanel() {
     if (!file) return;
     setImporting(true); setImportError("");
     try {
-      const images = await fileToImages(file);
-      if (images.length === 0) throw new Error("无法读取该文件");
-      const imported = await ocrResume(images);
+      const payload = await fileToImportPayload(file);
+      if ((payload.images?.length ?? 0) === 0 && !payload.text) throw new Error(L.aiErrFile);
+      const imported = await ocrResume(payload);
       const hasContent = imported.personal.fullName || imported.experiences.length > 0 || imported.skills.length > 0;
-      if (!hasContent) throw new Error("未识别到有效简历内容");
+      if (!hasContent) throw new Error(L.aiErrNoContent);
       setData(imported);
       setSectionOrder(buildSectionOrder(imported, sectionOrder));
     } catch (err: any) {
-      setImportError(err?.message || "导入失败");
+      setImportError(err?.message || L.aiErrImport);
+      // AI 额度不足时弹出 AI 次卡购买
+      if (err?.code === "NO_AI_CREDIT") {
+        useUiStore.getState().openPay("ai");
+      }
     } finally {
       setImporting(false);
       if (importRef.current) importRef.current.value = "";
@@ -229,50 +233,25 @@ export default function AiPanel() {
 
   return (
     <div className="space-y-3 text-sm">
-      {/* 以旧换新 */}
-      <div className="rounded-lg border border-emerald-200 bg-emerald-50/60 p-3">
-        <h4 className="mb-1.5 flex items-center gap-1.5 font-semibold text-emerald-700"><Icon name="refresh" size={15} /> 以旧换新</h4>
-        <p className="mb-2 text-xs text-gray-500">上传旧简历（图片 / PDF），AI 自动 OCR 识别生成结构化简历。</p>
-        <input ref={importRef} type="file" accept=".pdf,.png,.jpg,.jpeg,.webp,image/*" className="hidden" onChange={handleImportFile} />
-        <button onClick={() => importRef.current?.click()} disabled={importing} className={`${primary} w-full`}>
-          {importing ? "识别中…" : "上传旧简历并识别"}
-        </button>
-        {importError && <div className="mt-2 rounded-md bg-red-50 px-2 py-1.5 text-xs text-red-600">{importError}</div>}
-      </div>
-
-      {/* 语言润色 */}
-      <div className="rounded-lg border border-gray-200 p-3">
-        <h4 className="mb-1.5 flex items-center gap-1.5 font-semibold text-gray-700"><Icon name="edit" size={15} /> 语言润色</h4>
-        <p className="mb-2 text-xs text-gray-500">把你的大白话写进去，AI 自动改成专业、量化的简历语言。</p>
+      {/* 一键生成：主功能，默认展开 */}
+      <AiSection icon={<Icon name="bolt" size={15} />} title={L.aiGenerate} accent defaultOpen>
         <textarea
           rows={3}
-          value={roughText}
-          onChange={(e) => setRoughText(e.target.value)}
-          placeholder="例：我在公司做了个后台系统，用了Vue，感觉做得还行，负责了好几个页面……"
-          className="w-full rounded-md border border-gray-300 px-2.5 py-1.5 text-xs outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-100"
+          value={brief}
+          onChange={(e) => setBrief(e.target.value)}
+          placeholder={L.aiGenPh}
+          className="w-full rounded-md border border-gray-300 px-2.5 py-2 text-xs outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-100"
         />
-        <button onClick={handleLingo} disabled={lingo.loading} className={`${primary} mt-2 w-full`}>
-          {lingo.loading ? "润色中…" : "AI 润色语言"}
+        <button onClick={handleGenerate} disabled={gen.loading} className={`${primary} mt-2.5 w-full`}>
+          {gen.loading ? L.aiGenerating : L.aiGenBtn}
         </button>
-        {lingo.result && (
-          <div className="mt-2">
-            <textarea rows={4} value={lingo.result} onChange={(e) => lingo.setResult(e.target.value)} className="w-full rounded-md border border-brand-200 bg-brand-50/40 px-2.5 py-1.5 text-xs outline-none" />
-            <div className="mt-1.5 flex items-center gap-1.5">
-              <select value={polishType} onChange={(e) => setPolishType(e.target.value)} className={selectCls}>
-                {Object.entries(MODULE_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
-              </select>
-              <button onClick={applyLingoToModule} className={secondary}>应用到模块</button>
-            </div>
-          </div>
-        )}
-      </div>
+      </AiSection>
 
       {/* 模块润色 */}
-      <div className="rounded-lg border border-gray-200 p-3">
-        <h4 className="mb-1.5 flex items-center gap-1.5 font-semibold text-gray-700"><Icon name="brush" size={15} /> 模块润色</h4>
+      <AiSection icon={<Icon name="brush" size={15} />} title={L.aiPolish}>
         <div className="space-y-2">
           <select value={polishType} onChange={(e) => { setPolishType(e.target.value); setPolishItemId(""); }} className={selectCls}>
-            {Object.entries(MODULE_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+            {MODULE_KEYS.map((k) => <option key={k} value={k}>{L.sections[k] || k}</option>)}
           </select>
           {polishItems.length > 0 && (
             <select value={activePolishItem?.id || ""} onChange={(e) => setPolishItemId(e.target.value)} className={selectCls}>
@@ -280,28 +259,60 @@ export default function AiPanel() {
             </select>
           )}
           <button onClick={handlePolishModule} disabled={polish.loading} className={`${primary} w-full`}>
-            {polish.loading ? "润色中…" : `润色「${MODULE_LABELS[polishType]}」`}
+            {polish.loading ? L.aiPolishing : L.aiPolishBtn(L.sections[polishType] || polishType)}
           </button>
         </div>
-      </div>
+      </AiSection>
 
-      {/* 一键生成 */}
-      <div className="rounded-lg border border-brand-200 bg-brand-50/50 p-3">
-        <h4 className="mb-1.5 flex items-center gap-1.5 font-semibold text-brand-700"><Icon name="bolt" size={15} /> 一键生成简历</h4>
-        <textarea rows={2} value={brief} onChange={(e) => setBrief(e.target.value)} placeholder="描述背景、目标岗位与亮点，AI 自动生成完整简历……" className="w-full rounded-md border border-gray-300 px-2.5 py-1.5 text-xs outline-none focus:border-brand-500" />
-        <button onClick={handleGenerate} disabled={gen.loading} className={`${primary} mt-2 w-full`}>
-          {gen.loading ? "生成中…" : "生成完整简历"}
+      {/* 语言润色 */}
+      <AiSection icon={<Icon name="edit" size={15} />} title={L.aiLingo}>
+        <p className="mb-2 text-xs text-gray-500">{L.aiLingoHint}</p>
+        <textarea
+          rows={3}
+          value={roughText}
+          onChange={(e) => setRoughText(e.target.value)}
+          placeholder={L.aiLingoPh}
+          className="w-full rounded-md border border-gray-300 px-2.5 py-2 text-xs outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-100"
+        />
+        <button onClick={handleLingo} disabled={lingo.loading} className={`${primary} mt-2.5 w-full`}>
+          {lingo.loading ? L.aiPolishing : L.aiLingoBtn}
         </button>
-      </div>
+        {lingo.result && (
+          <div className="mt-2">
+            <textarea rows={4} value={lingo.result} onChange={(e) => lingo.setResult(e.target.value)} className="w-full rounded-md border border-brand-200 bg-brand-50/40 px-2.5 py-2 text-xs outline-none" />
+            <div className="mt-1.5 flex items-center gap-1.5">
+              <select value={polishType} onChange={(e) => setPolishType(e.target.value)} className={selectCls}>
+                {MODULE_KEYS.map((k) => <option key={k} value={k}>{L.sections[k] || k}</option>)}
+              </select>
+              <button onClick={applyLingoToModule} className={secondary}>{L.aiApplyTo}</button>
+            </div>
+          </div>
+        )}
+      </AiSection>
 
       {/* JD 定制 */}
-      <div className="rounded-lg border border-gray-200 p-3">
-        <h4 className="mb-1.5 flex items-center gap-1.5 font-semibold text-gray-700"><Icon name="target" size={15} /> 根据职位描述定制</h4>
-        <textarea rows={3} value={jd} onChange={(e) => setJd(e.target.value)} placeholder="粘贴目标职位 JD，AI 据此优化简历……" className="w-full rounded-md border border-gray-300 px-2.5 py-1.5 text-xs outline-none focus:border-brand-500" />
-        <button onClick={handleTailor} disabled={tailor.loading} className={`${primary} mt-2 w-full`}>
-          {tailor.loading ? "定制中…" : "根据 JD 定制简历"}
+      <AiSection icon={<Icon name="target" size={15} />} title={L.aiTailor}>
+        <textarea
+          rows={3}
+          value={jd}
+          onChange={(e) => setJd(e.target.value)}
+          placeholder={L.aiTailorPh}
+          className="w-full rounded-md border border-gray-300 px-2.5 py-2 text-xs outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-100"
+        />
+        <button onClick={handleTailor} disabled={tailor.loading} className={`${primary} mt-2.5 w-full`}>
+          {tailor.loading ? L.aiTailoring : L.aiTailorBtn}
         </button>
-      </div>
+      </AiSection>
+
+      {/* 以旧换新 */}
+      <AiSection icon={<Icon name="refresh" size={15} />} title={L.aiRecycle}>
+        <p className="mb-2 text-xs text-gray-500">{L.aiRecycleHint}</p>
+        <input ref={importRef} type="file" accept=".pdf,.png,.jpg,.jpeg,.webp,image/*" className="hidden" onChange={handleImportFile} />
+        <button onClick={() => importRef.current?.click()} disabled={importing} className={`${primary} w-full`}>
+          {importing ? L.aiRecognizing : L.aiRecycleBtn}
+        </button>
+        {importError && <div className="mt-2 rounded-md bg-red-50 px-2 py-1.5 text-xs text-red-600">{importError}</div>}
+      </AiSection>
 
       {(gen.error || tailor.error || polish.error || lingo.error) && (
         <div className="rounded-md bg-red-50 px-3 py-2 text-xs text-red-600">

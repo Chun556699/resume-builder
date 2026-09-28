@@ -7,14 +7,197 @@ body {
   height: 100%;
 }
 
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
 body {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
     "Hiragino Sans GB", "Microsoft YaHei", "Helvetica Neue", Helvetica, Arial,
     sans-serif;
+  overscroll-behavior: none;
+}
+
+/* ---------- 简历字体（@font-face，仅在实际使用时才被浏览器下载） ---------- */
+
+/* 中文字体：思源黑体 */
+@font-face {
+  font-family: "Noto Sans SC";
+  src: url("/fonts/NotoSansSC-Regular.otf") format("opentype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Noto Sans SC";
+  src: url("/fonts/NotoSansSC-Bold.otf") format("opentype");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* 中文字体：思源宋体 */
+@font-face {
+  font-family: "Noto Serif SC";
+  src: url("/fonts/NotoSerifSC-Regular.otf") format("opentype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Noto Serif SC";
+  src: url("/fonts/NotoSerifSC-Bold.otf") format("opentype");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* 中文字体：霞鹜文楷 */
+@font-face {
+  font-family: "LXGW WenKai";
+  src: url("/fonts/LXGWWenKai-Regular.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* 中文字体：阿里巴巴普惠体 */
+@font-face {
+  font-family: "Alibaba PuHuiTi 3";
+  src: url("/fonts/AlibabaPuHuiTi-3-55-Regular.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Alibaba PuHuiTi 3";
+  src: url("/fonts/AlibabaPuHuiTi-3-85-Bold.ttf") format("truetype");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* 中文字体：得意黑（斜体造型） */
+@font-face {
+  font-family: "Smiley Sans";
+  src: url("/fonts/SmileySans-Oblique.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* 中文字体：思源黑体 细体 */
+@font-face {
+  font-family: "Noto Sans SC Light";
+  src: url("/fonts/NotoSansSC-Light.otf") format("opentype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* 中文字体：思源黑体 中黑 */
+@font-face {
+  font-family: "Noto Sans SC Medium";
+  src: url("/fonts/NotoSansSC-Medium.otf") format("opentype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* 中文字体：思源黑体 巨黑 */
+@font-face {
+  font-family: "Noto Sans SC Heavy";
+  src: url("/fonts/NotoSansSC-Black.otf") format("opentype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* 中文字体：思源柔黑 */
+@font-face {
+  font-family: "Resource Han Rounded";
+  src: url("/fonts/ResourceHanRoundedCN-Regular.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Resource Han Rounded";
+  src: url("/fonts/ResourceHanRoundedCN-Bold.ttf") format("truetype");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* 英文字体：Source Sans 3 */
+@font-face {
+  font-family: "Source Sans 3";
+  src: url("/fonts/SourceSans3-Regular.otf") format("opentype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Source Sans 3";
+  src: url("/fonts/SourceSans3-Bold.otf") format("opentype");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* 英文字体：Source Serif 4 */
+@font-face {
+  font-family: "Source Serif 4";
+  src: url("/fonts/SourceSerif4-Regular.otf") format("opentype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Source Serif 4";
+  src: url("/fonts/SourceSerif4-Bold.otf") format("opentype");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* 英文字体：Source Code Pro */
+@font-face {
+  font-family: "Source Code Pro";
+  src: url("/fonts/SourceCodePro-Regular.otf") format("opentype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Source Code Pro";
+  src: url("/fonts/SourceCodePro-Bold.otf") format("opentype");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* 英文字体：Google Sans Code（可变字体） */
+@font-face {
+  font-family: "Google Sans Code";
+  src: url("/fonts/GoogleSansCode.ttf") format("truetype");
+  font-weight: 400 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+* {
+  -webkit-tap-highlight-color: transparent;
 }
 
 /* 打印样式：仅打印简历预览区域 */
 @media print {
+  /* 去掉浏览器默认页边距，由简历页面自身的内边距控制留白 */
+  @page {
+    margin: 0;
+  }
+
   body * {
     visibility: hidden;
   }
@@ -28,4 +211,24 @@ body {
     top: 0;
     width: 100%;
   }
+  /* 单栏多页：每页独占一页打印 */
+  .resume-page {
+    page-break-after: always;
+  }
+  .resume-page:last-child {
+    page-break-after: auto;
+  }
+}
+
+/* ---------- blocks 模板：技术标签方块（鼠标悬停时高亮“打标签”） ---------- */
+.rb-tag {
+  --rb-accent: #1f4df5;
+  background-color: color-mix(in srgb, var(--rb-accent) 10%, transparent);
+  border-color: color-mix(in srgb, var(--rb-accent) 40%, transparent);
+  color: var(--rb-accent);
+}
+.rb-tag:hover {
+  background-color: var(--rb-accent);
+  border-color: var(--rb-accent);
+  color: #fff;
 }

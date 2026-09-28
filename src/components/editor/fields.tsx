@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { useUiT } from "@/lib/useUiT";
 
 export function Field({ label, children, hint }: { label: string; children: React.ReactNode; hint?: string }) {
   return (
@@ -31,6 +32,7 @@ export function TextArea(props: React.TextareaHTMLAttributes<HTMLTextAreaElement
 }
 
 export function Card({ title, children, onRemove, actions }: { title: string; children: React.ReactNode; onRemove?: () => void; actions?: React.ReactNode }) {
+  const L = useUiT();
   return (
     <div className="rounded-xl border border-gray-100 bg-white p-4 shadow-sm">
       <div className="mb-3 flex items-center justify-between border-b border-gray-50 pb-2.5">
@@ -41,9 +43,9 @@ export function Card({ title, children, onRemove, actions }: { title: string; ch
             <button
               onClick={onRemove}
               className="rounded-md px-1.5 py-0.5 text-xs text-red-400 transition hover:bg-red-50 hover:text-red-500"
-              title="删除"
+              title={L.remove}
             >
-              删除
+              {L.remove}
             </button>
           )}
         </div>

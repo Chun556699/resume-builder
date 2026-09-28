@@ -9,21 +9,30 @@ export function splitBullets(text: string): string[] {
     .filter(Boolean);
 }
 
+// 将富文本（内联 HTML + \n 换行）还原为纯文本，用于左侧表单输入框展示，
+// 避免 <b>/<span> 等样式代码直接出现在输入框里。
+export function htmlToPlainText(html: string): string {
+  if (!html) return "";
+  return html
+    .replace(/<br\s*\/?>/gi, "\n")
+    .replace(/<\/(div|p|li|ul|ol|h[1-6]|tr)>/gi, "\n")
+    .replace(/<[^>]*>/g, "")
+    .replace(/&nbsp;/gi, " ")
+    .replace(/&amp;/gi, "&")
+    .replace(/&lt;/gi, "<")
+    .replace(/&gt;/gi, ">")
+    .replace(/&quot;/gi, '"')
+    .replace(/&#39;|&apos;/gi, "'")
+    .replace(/\n[ \t]+/g, "\n")
+    .trim();
+}
+
 export function moveItem<T>(arr: T[], from: number, to: number): T[] {
   const copy = [...arr];
   if (from < 0 || from >= copy.length || to < 0 || to >= copy.length) return copy;
   const [moved] = copy.splice(from, 1);
   copy.splice(to, 0, moved);
   return copy;
-}
-
-export function readImageAsDataUrl(file: File): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result as string);
-    reader.onerror = reject;
-    reader.readAsDataURL(file);
-  });
 }
 
 /* ---- 板块顺序（支持固定板块 + 单个自定义模块） ---- */
